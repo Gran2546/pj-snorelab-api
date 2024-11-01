@@ -1,0 +1,100 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waveform Visualization</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        canvas {
+            border: 1px solid #000;
+        }
+
+        input {
+            margin-bottom: 20px;
+            width: 300px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <input type="text" id="urlInput" placeholder="Enter .wav file URL" />
+    <button id="loadButton">Load WAV</button> -->
+    <canvas id="waveform" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('waveform');
+        const ctx = canvas.getContext('2d');
+        const urlInput = document.getElementById('urlInput');
+        const loadButton = document.getElementById('loadButton');
+
+        // Function to draw the waveform
+        function drawWaveform(data) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const step = Math.ceil(data.length / width);
+            ctx.clearRect(0, 0, width, height);
+            ctx.beginPath();
+            ctx.moveTo(0, height / 2);
+
+            for (let i = 0; i < width; i++) {
+                const min = Math.min(...data.slice(i * step, (i + 1) * step));
+                const max = Math.max(...data.slice(i * step, (i + 1) * step));
+                ctx.lineTo(i, (1 + min) * height / 2);
+                ctx.lineTo(i, (1 + max) * height / 2);
+            }
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Function to fetch and process the WAV file
+        async function processWavFile(url) {
+            try {
+                console.log(url);
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const arrayBuffer = await response.arrayBuffer();
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                // Get the first channel data
+                const channelData = audioBuffer.getChannelData(0);
+
+                // Draw the waveform
+                drawWaveform(channelData);
+            } catch (error) {
+                alert('Error fetching or processing the WAV file: ' + error.message + url);
+            }
+        }
+
+        // Get the id and any query parameters from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileName = urlParams.get('fileName');
+        console.log(fileName);
+
+        if (!fileName) {
+            alert('Error fetching or processing the WAV file: No file name provided.');
+        } else {
+            // Fetching from local source
+            processWavFile(`https://${fileName}`);
+        }
+        console.log('test');
+    </script>
+</body>
+
+</html>
